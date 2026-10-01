@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calculadora</title>
+  <style>
+    :root {
+      --fondo: #1e1e2e;
+      --panel: #2b2b3d;
+      --pantalla: #1e1e2e;
+      --texto: #ffffff;
+      --texto-suave: #9a9ab5;
+      --boton: #44445c;
+      --boton-hover: #5a5a7a;
+      --operador: #6c5ce7;
+      --operador-hover: #8075ee;
+      --igual: #00b894;
+      --igual-hover: #1fd1ab;
+    }
+
+    :root[data-tema="claro"] {
+      --fondo: #e9ebf2;
+      --panel: #ffffff;
+      --pantalla: #f0f1f7;
+      --texto: #1e1e2e;
+      --texto-suave: #6b6b85;
+      --boton: #e1e3ee;
+      --boton-hover: #d0d3e3;
+      --operador: #6c5ce7;
+      --operador-hover: #5849c9;
+      --igual: #00a383;
+      --igual-hover: #008c70;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: var(--fondo);
+      font-family: Arial, sans-serif;
+      color: var(--texto);
+    }
+
+    .calculadora {
+      background: var(--panel);
+      padding: 20px;
+      border-radius: 16px;
+      width: 320px;
+    }
+
+    .barra {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .barra button {
+      height: 34px;
+      padding: 0 12px;
+      font-size: 14px;
+      background: var(--boton);
+      color: var(--texto);
+    }
+
+    .barra button:hover { background: var(--boton-hover); }
+
+    .visor {
+      background: var(--pantalla);
+      border-radius: 8px;
+      padding: 8px 12px 6px;
+      margin-bottom: 16px;
+    }
+
+    #expresion {
+      min-height: 18px;
+      font-size: 14px;
+      text-align: right;
+      color: var(--texto-suave);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    #pantalla {
+      width: 100%;
+      height: 44px;
+      font-size: 28px;
+      text-align: right;
+      padding: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--texto);
+    }
+
+    .botones {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      height: 55px;
+      font-size: 20px;
+      border: none;
+      border-radius: 8px;
+      background: var(--boton);
+      color: var(--texto);
+      cursor: pointer;
+    }
+
+    button:hover { background: var(--boton-hover); }
+
+    button:focus-visible {
+      outline: 2px solid var(--operador);
+      outline-offset: 2px;
+    }
+
+    .botones .operador { background: var(--operador); color: #ffffff; }
+    .botones .operador:hover { background: var(--operador-hover); }
+
+    .botones .igual {
+      grid-column: span 4;
+      background: var(--igual);
+      color: #ffffff;
+    }
+    .botones .igual:hover { background: var(--igual-hover); }
+
+    .historial {
+      display: none;
+      margin-top: 16px;
+      border-top: 1px solid var(--boton);
+      padding-top: 12px;
+    }
+
+    .historial.abierto { display: block; }
+
+    .historial-cabecera {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--texto-suave);
+    }
+
+    .historial-cabecera button {
+      height: 28px;
+      padding: 0 10px;
+      font-size: 13px;
+    }
+
+    #lista-historial {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    #lista-historial li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #lista-historial li:hover { background: var(--pantalla); }
+
+    #lista-historial .op { color: var(--texto-suave); }
+
+    .vacio {
+      font-size: 14px;
+      color: var(--texto-suave);
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculadora">
+    <div class="barra">
+      <button id="btn-historial" type="button">Historial</button>
+      <button id="btn-tema" type="button">Modo claro</button>
+    </div>
+
+    <div class="visor">
+      <div id="expresion"></div>
+      <input type="text" id="pantalla" readonly aria-label="Pantalla">
+    </div>
+
+    <div class="botones">
+      <button data-valor="C">C</button>
+      <button data-valor="⌫">⌫</button>
+      <button data-valor="(" class="operador">(</button>
+      <button data-valor=")" class="operador">)</button>
+
+      <button data-valor="7">7</button>
+      <button data-valor="8">8</button>
+      <button data-valor="9">9</button>
+      <button data-valor="/" class="operador">÷</button>
+
+      <button data-valor="4">4</button>
+      <button data-valor="5">5</button>
+      <button data-valor="6">6</button>
+      <button data-valor="*" class="operador">×</button>
+
+      <button data-valor="1">1</button>
+      <button data-valor="2">2</button>
+      <button data-valor="3">3</button>
+      <button data-valor="-" class="operador">−</button>
+
+      <button data-valor="0">0</button>
+      <button data-valor=".">.</button>
+      <button data-valor="%" class="operador">%</button>
+      <button data-valor="+" class="operador">+</button>
+
+      <button data-valor="=" class="igual">=</button>
+    </div>
+
+    <div class="historial" id="panel-historial">
+      <div class="historial-cabecera">
+        <span>Operaciones anteriores</span>
+        <button id="btn-borrar-historial" type="button">Borrar</button>
+      </div>
+      <ul id="lista-historial"></ul>
+    </div>
+  </div>
+
+  <script>
+    const pantalla = document.getElementById("pantalla");
+    const lineaExpresion = document.getElementById("expresion");
+    const botonesCalc = document.querySelectorAll(".botones button");
+    const btnHistorial = document.getElementById("btn-historial");
+    const btnTema = document.getElementById("btn-tema");
+    const btnBorrarHistorial = document.getElementById("btn-borrar-historial");
+    const panelHistorial = document.getElementById("panel-historial");
+    const listaHistorial = document.getElementById("lista-historial");
+
+    const MAX_HISTORIAL = 20;
+    let historial = [];
+    let recienCalculado = false;
+
+    // ---------- Almacenamiento (con protección por si falla) ----------
+    function guardar(clave, valor) {
+      try { localStorage.setItem(clave, valor); } catch (e) { /* ignorar */ }
+    }
+
+    function leer(clave) {
+      try { return localStorage.getItem(clave); } catch (e) { return null; }
+    }
+
+    // ---------- Cálculo seguro (sin eval) ----------
+    function calcular(texto) {
+      const tokens = texto.match(/\d+\.?\d*|\.\d+|[+\-*/()%]/g);
+
+      // Si quedó algún carácter fuera de lo permitido, no se procesa
+      if (!tokens || tokens.join("") !== texto) return "Error";
+
+      let pos = 0;
+
+      function expresion() {
+        let v = termino();
+        while (tokens[pos] === "+" || tokens[pos] === "-") {
+          const op = tokens[pos++];
+          const r = termino();
+          v = op === "+" ? v + r : v - r;
+        }
+        return v;
+      }
+
+      function termino() {
+        let v = unario();
+        while (tokens[pos] === "*" || tokens[pos] === "/") {
+          const op = tokens[pos++];
+          const r = unario();
+          if (op === "/") {
+            if (r === 0) throw new Error("division por cero");
+            v = v / r;
+          } else {
+            v = v * r;
+          }
+        }
+        return v;
+      }
+
+      function unario() {
+        if (tokens[pos] === "-") { pos++; return -unario(); }
+        if (tokens[pos] === "+") { pos++; return unario(); }
+        return porcentaje();
+      }
+
+      function porcentaje() {
+        let v = primario();
+        while (tokens[pos] === "%") { pos++; v = v / 100; }
+        return v;
+      }
+
+      function primario() {
+        const t = tokens[pos++];
+        if (t === undefined) throw new Error("expresion incompleta");
+        if (t === "(") {
+          const v = expresion();
+          if (tokens[pos++] !== ")") throw new Error("falta cerrar )");
+          return v;
+        }
+        if (/^[\d.]/.test(t)) return parseFloat(t);
+        throw new Error("simbolo inesperado");
+      }
+
+      try {
+        const resultado = expresion();
+        if (pos !== tokens.length) return "Error";
+        if (!isFinite(resultado)) return "Error";
+        return Number(resultado.toFixed(10));
+      } catch (e) {
+        return "Error";
+      }
+    }
+
+    // ---------- Historial ----------
+    function cargarHistorial() {
+      try {
+        const datos = JSON.parse(leer("historial") || "[]");
+        if (Array.isArray(datos)) {
+          historial = datos
+            .filter(function (h) {
+              return h && typeof h.op === "string" && typeof h.res === "string";
+            })
+            .slice(0, MAX_HISTORIAL);
+        }
+      } catch (e) {
+        historial = [];
+      }
+    }
+
+    function dibujarHistorial() {
+      listaHistorial.textContent = "";
+
+      if (historial.length === 0) {
+        const vacio = document.createElement("li");
+        vacio.className = "vacio";
+        vacio.textContent = "Aún no hay operaciones.";
+        listaHistorial.appendChild(vacio);
+        return;
+      }
+
+      historial.forEach(function (item) {
+        const li = document.createElement("li");
+        const op = document.createElement("span");
+        const res = document.createElement("span");
+
+        op.className = "op";
+        op.textContent = item.op;
+        res.textContent = "= " + item.res;
+
+        li.appendChild(op);
+        li.appendChild(res);
+        li.addEventListener("click", function () {
+          pantalla.value = item.res;
+          lineaExpresion.textContent = item.op + " =";
+          recienCalculado = true;
+        });
+
+        listaHistorial.appendChild(li);
+      });
+    }
+
+    function agregarHistorial(op, res) {
+      historial.unshift({ op: op, res: String(res) });
+      historial = historial.slice(0, MAX_HISTORIAL);
+      guardar("historial", JSON.stringify(historial));
+      dibujarHistorial();
+    }
+
+    // ---------- Teclas ----------
+    function procesarTecla(valor) {
+      if (pantalla.value === "Error") {
+        pantalla.value = "";
+        lineaExpresion.textContent = "";
+      }
+
+      // Después de un resultado: un número empieza de cero,
+      // un operador continúa con el resultado
+      if (recienCalculado) {
+        if (/^[0-9.(]$/.test(valor)) {
+          pantalla.value = "";
+        }
+        lineaExpresion.textContent = "";
+        recienCalculado = false;
+      }
+
+      if (valor === "C") {
+        pantalla.value = "";
+        lineaExpresion.textContent = "";
+      } else if (valor === "⌫") {
+        pantalla.value = pantalla.value.slice(0, -1);
+      } else if (valor === "=") {
+        const operacion = pantalla.value;
+        if (operacion === "") return;
+
+        const resultado = calcular(operacion);
+        pantalla.value = resultado;
+
+        if (resultado !== "Error") {
+          lineaExpresion.textContent = operacion + " =";
+          agregarHistorial(operacion, resultado);
+          recienCalculado = true;
+        }
+      } else {
+        pantalla.value += valor;
+      }
+    }
+
+    botonesCalc.forEach(function (boton) {
+      boton.addEventListener("click", function () {
+        procesarTecla(boton.dataset.valor);
+      });
+    });
+
+    document.addEventListener("keydown", function (e) {
+      const tecla = e.key;
+
+      if (/^[0-9.+\-*/()%]$/.test(tecla)) {
+        e.preventDefault();
+        procesarTecla(tecla);
+      } else if (tecla === "Enter" || tecla === "=") {
+        e.preventDefault();
+        procesarTecla("=");
+      } else if (tecla === "Backspace") {
+        e.preventDefault();
+        procesarTecla("⌫");
+      } else if (tecla === "Escape" || tecla === "c" || tecla === "C") {
+        e.preventDefault();
+        procesarTecla("C");
+      }
+    });
+
+    // ---------- Tema ----------
+    function aplicarTema(tema) {
+      document.documentElement.dataset.tema = tema;
+      btnTema.textContent = tema === "claro" ? "Modo oscuro" : "Modo claro";
+      guardar("tema", tema);
+    }
+
+    btnTema.addEventListener("click", function () {
+      const actual = document.documentElement.dataset.tema;
+      aplicarTema(actual === "claro" ? "oscuro" : "claro");
+    });
+
+    // ---------- Panel de historial ----------
+    btnHistorial.addEventListener("click", function () {
+      panelHistorial.classList.toggle("abierto");
+    });
+
+    btnBorrarHistorial.addEventListener("click", function () {
+      historial = [];
+      guardar("historial", "[]");
+      dibujarHistorial();
+    });
+
+    // ---------- Inicio ----------
+    aplicarTema(leer("tema") === "claro" ? "claro" : "oscuro");
+    cargarHistorial();
+    dibujarHistorial();
+  </script>
+</body>
+</html>
